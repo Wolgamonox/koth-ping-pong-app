@@ -3,39 +3,24 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
-import 'package:koth_ping_pong_app/qr_code_reader.dart';
+import 'package:koth_ping_pong_app/widgets/qr_code_reader.dart';
 import 'package:timer_count_down/timer_controller.dart';
 import 'package:timer_count_down/timer_count_down.dart';
 import 'package:blinking_text/blinking_text.dart';
 import 'package:audioplayers/audioplayers.dart';
 
-import 'add_player_dialog.dart';
-import 'chrono_button.dart';
+import 'widgets/add_player_dialog.dart';
+import 'widgets/chrono_button.dart';
 
-const Duration gameDuration = Duration(minutes: 5);
+import 'model/player_transition.dart';
 
-class PlayerTransition {
-  final String name;
-  final int interval;
+const Duration gameDuration = Duration(seconds: 10);
+const String kingChangeSoundUrl =
+    "https://lasonotheque.org/UPLOAD/mp3/1554.mp3";
+const String minuteSoundUrl = "https://lasonotheque.org/UPLOAD/mp3/1830.mp3";
+const String overtimeStartSoundUrl =
+    "https://lasonotheque.org/UPLOAD/mp3/0564.mp3";
 
-  PlayerTransition(this.name, this.interval);
-
-  @override
-  String toString() {
-    return '$name:$interval';
-  }
-}
-
-Map<String, dynamic> transitionsToJson(List<PlayerTransition> transitions) {
-  Map<String, dynamic> json = {
-    'transitions': [
-      for (var transition in transitions)
-        {transition.name: transition.interval}
-    ],
-  };
-  
-  return json;
-}
 
 // TODO implement pause
 enum GamePhase { idle, paused, playing, overtime }
@@ -56,6 +41,7 @@ class _HomepageState extends State<Homepage> {
 
   final CountdownController timerController = CountdownController();
   final Stopwatch stopwatch = Stopwatch();
+  Timer? minuteTimer;
 
   String? serverHost;
 
@@ -64,7 +50,7 @@ class _HomepageState extends State<Homepage> {
       for (var player in players)
         ChronoButton(
           player: player,
-          color: player == currentKing ? Colors.amber : Colors.deepPurpleAccent,
+          color: player == currentKing ? Colors.amber : Colors.lightGreen,
           onPressed: _getButtonAction(player),
         ),
     ];
@@ -75,32 +61,30 @@ class _HomepageState extends State<Homepage> {
       case GamePhase.idle:
         return () {
           print('Start timer with $player as king');
+
           setState(() {
             phase = GamePhase.playing;
             currentKing = player;
             timerController.start();
             stopwatch.start();
           });
-          print('transitions: $transitions');
         };
-      case GamePhase.paused:
-        return () {};
       case GamePhase.playing:
         if (player != currentKing) {
           return () {
             print('$player is now king');
+
             setState(() {
-              transitions.add(
-                  PlayerTransition(currentKing, stopwatch.elapsed.inSeconds));
+              transitions.add(PlayerTransition(
+                currentKing,
+                stopwatch.elapsed.inSeconds,
+              ));
 
               // resets but continues running for next king
               stopwatch.reset();
               currentKing = player;
             });
             print('transitions: $transitions');
-
-
-            print('transitions (json): ${transitionsToJson(transitions)}');
           };
         } else {
           return () {};
@@ -111,36 +95,54 @@ class _HomepageState extends State<Homepage> {
 
           setState(() {
             // add time of king before
-            transitions.add(
-                PlayerTransition(currentKing, stopwatch.elapsed.inSeconds));
+            transitions.add(PlayerTransition(
+              currentKing,
+              stopwatch.elapsed.inSeconds,
+            ));
 
             if (player != currentKing) {
               transitions.add(PlayerTransition(player, 1));
+            }
+
+            if (serverHost != null) {
+              sendToServer(transitions, serverHost!);
+            } else {
+              print('No server connected');
             }
 
             stopwatch.stop();
             stopwatch.reset();
 
             currentKing = '';
+            transitions.clear();
             phase = GamePhase.idle;
           });
-
-          if (serverHost != null) {
-            sendToServer(transitions, serverHost!).then((value) => print(value.statusCode));
-          } else {
-            print('No server connected');
-          }
         };
+      case GamePhase.paused:
+        return () {};
     }
   }
 
-  Future<String?> _openAddPlayerDialog(BuildContext context) async {
-    return await showDialog<String>(
-      context: context,
-      builder: (context) {
-        return const AddPlayerDialog();
-      },
-    );
+  @override
+  void initState() {
+    super.initState();
+
+    // add a timer that makes a sound every minute
+    timerController.setOnStart(() {
+      minuteTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
+        AudioPlayer().play(UrlSource(minuteSoundUrl));
+      });
+    });
+
+    timerController.setOnResume(() {
+      minuteTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
+        AudioPlayer().play(UrlSource(minuteSoundUrl));
+      });
+    });
+
+    timerController.setOnPause(() {
+      minuteTimer?.cancel();
+    });
   }
 
   @override
@@ -153,15 +155,19 @@ class _HomepageState extends State<Homepage> {
                 IconButton(
                   onPressed: () async {
                     var result = await showQRCodePage(context);
+                    // TODO: Save server host to shared preferences.
                     setState(() {
                       serverHost = result;
                     });
                   },
-                  icon: Icon(Icons.qr_code, color: serverHost != null ? Colors.green : Colors.red,),
+                  icon: Icon(
+                    Icons.qr_code,
+                    color: serverHost != null ? Colors.green : Colors.red,
+                  ),
                 ),
                 IconButton(
                   onPressed: () async {
-                    String? result = await _openAddPlayerDialog(context);
+                    String? result = await openAddPlayerDialog(context);
                     if (result != null) {
                       setState(() {
                         players.add(result);
@@ -203,13 +209,8 @@ class _HomepageState extends State<Homepage> {
                         ),
               interval: const Duration(milliseconds: 100),
               onFinished: () {
-                // play sound sncf
-                // https://lasonotheque.org/UPLOAD/mp3/0564.mp3
-
-                AudioPlayer().play(UrlSource('https://lasonotheque.org/UPLOAD/mp3/0564.mp3'));
-
+                AudioPlayer().play(UrlSource(overtimeStartSoundUrl));
                 setState(() {
-                  print('Timer finished');
                   phase = GamePhase.overtime;
                   timerController.restart();
                   timerController.pause();
@@ -235,8 +236,8 @@ class _HomepageState extends State<Homepage> {
   }
 }
 
-Future<http.Response> sendToServer(List<PlayerTransition> transitions, String hostName) {
-  print('HTTP REQUEST URL : http://$hostName/upload');
+Future<http.Response> sendToServer(
+    List<PlayerTransition> transitions, String hostName) {
   return http.post(
     Uri.parse('http://$hostName/upload'),
     headers: <String, String>{
@@ -247,5 +248,3 @@ Future<http.Response> sendToServer(List<PlayerTransition> transitions, String ho
 }
 
 String twoDigits(int n) => n.toString().padLeft(2, '0');
-
-

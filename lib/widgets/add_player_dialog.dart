@@ -1,5 +1,14 @@
 import 'package:flutter/material.dart';
 
+Future<String?> openAddPlayerDialog(BuildContext context) async {
+  return await showDialog<String>(
+    context: context,
+    builder: (context) {
+      return const AddPlayerDialog();
+    },
+  );
+}
+
 class AddPlayerDialog extends StatefulWidget {
   const AddPlayerDialog({Key? key}) : super(key: key);
 
