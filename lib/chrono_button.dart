@@ -21,11 +21,7 @@ class ChronoButton extends StatelessWidget {
       ),
       child: Text(
         player,
-        style: const TextStyle(
-          color: Colors.black87,
-          fontWeight: FontWeight.bold,
-          fontSize: 48.0,
-        ),
+        style: Theme.of(context).textTheme.titleLarge,
       ),
     );
   }

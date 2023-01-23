@@ -35,7 +35,7 @@ class _AddPlayerDialogState extends State<AddPlayerDialog> {
         ),
         TextButton(
           onPressed: buttonEnabled
-              ? () => Navigator.pop(context, controller.text)
+              ? () => Navigator.pop(context, controller.text.trim())
               : null,
           child: const Text('Add'),
         ),

@@ -1,22 +1,40 @@
 import 'dart:async';
+import 'dart:convert';
 
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:koth_ping_pong_app/qr_code_reader.dart';
 import 'package:timer_count_down/timer_controller.dart';
 import 'package:timer_count_down/timer_count_down.dart';
 import 'package:blinking_text/blinking_text.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 import 'add_player_dialog.dart';
 import 'chrono_button.dart';
+
+const Duration gameDuration = Duration(minutes: 5);
 
 class PlayerTransition {
   final String name;
   final int interval;
 
   PlayerTransition(this.name, this.interval);
+
   @override
   String toString() {
     return '$name:$interval';
   }
+}
+
+Map<String, dynamic> transitionsToJson(List<PlayerTransition> transitions) {
+  Map<String, dynamic> json = {
+    'transitions': [
+      for (var transition in transitions)
+        {transition.name: transition.interval}
+    ],
+  };
+  
+  return json;
 }
 
 // TODO implement pause
@@ -38,6 +56,8 @@ class _HomepageState extends State<Homepage> {
 
   final CountdownController timerController = CountdownController();
   final Stopwatch stopwatch = Stopwatch();
+
+  String? serverHost;
 
   List<Widget> _buildChronoButtons(List<String> players) {
     return [
@@ -78,6 +98,9 @@ class _HomepageState extends State<Homepage> {
               currentKing = player;
             });
             print('transitions: $transitions');
+
+
+            print('transitions (json): ${transitionsToJson(transitions)}');
           };
         } else {
           return () {};
@@ -92,16 +115,21 @@ class _HomepageState extends State<Homepage> {
                 PlayerTransition(currentKing, stopwatch.elapsed.inSeconds));
 
             if (player != currentKing) {
-              transitions.add(
-                  PlayerTransition(player, 1));
+              transitions.add(PlayerTransition(player, 1));
             }
 
             stopwatch.stop();
             stopwatch.reset();
 
+            currentKing = '';
             phase = GamePhase.idle;
           });
-          print('transitions: $transitions');
+
+          if (serverHost != null) {
+            sendToServer(transitions, serverHost!).then((value) => print(value.statusCode));
+          } else {
+            print('No server connected');
+          }
         };
     }
   }
@@ -122,7 +150,15 @@ class _HomepageState extends State<Homepage> {
         title: const Text('Ping Pong Chrono'),
         actions: phase == GamePhase.idle || phase == GamePhase.paused
             ? [
-                // TODO disable actions while playing
+                IconButton(
+                  onPressed: () async {
+                    var result = await showQRCodePage(context);
+                    setState(() {
+                      serverHost = result;
+                    });
+                  },
+                  icon: Icon(Icons.qr_code, color: serverHost != null ? Colors.green : Colors.red,),
+                ),
                 IconButton(
                   onPressed: () async {
                     String? result = await _openAddPlayerDialog(context);
@@ -153,7 +189,7 @@ class _HomepageState extends State<Homepage> {
             flex: 1,
             child: Countdown(
               controller: timerController,
-              seconds: const Duration(seconds: 30).inSeconds,
+              seconds: gameDuration.inSeconds,
               build: (BuildContext context, double time) =>
                   phase == GamePhase.overtime
                       ? BlinkText(
@@ -167,9 +203,16 @@ class _HomepageState extends State<Homepage> {
                         ),
               interval: const Duration(milliseconds: 100),
               onFinished: () {
+                // play sound sncf
+                // https://lasonotheque.org/UPLOAD/mp3/0564.mp3
+
+                AudioPlayer().play(UrlSource('https://lasonotheque.org/UPLOAD/mp3/0564.mp3'));
+
                 setState(() {
                   print('Timer finished');
                   phase = GamePhase.overtime;
+                  timerController.restart();
+                  timerController.pause();
                 });
               },
             ),
@@ -192,4 +235,17 @@ class _HomepageState extends State<Homepage> {
   }
 }
 
+Future<http.Response> sendToServer(List<PlayerTransition> transitions, String hostName) {
+  print('HTTP REQUEST URL : http://$hostName/upload');
+  return http.post(
+    Uri.parse('http://$hostName/upload'),
+    headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+    },
+    body: jsonEncode(transitionsToJson(transitions)),
+  );
+}
+
 String twoDigits(int n) => n.toString().padLeft(2, '0');
+
+
