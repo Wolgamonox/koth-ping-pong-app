@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:duration_picker/duration_picker.dart';
 
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
@@ -14,13 +15,12 @@ import 'widgets/chrono_button.dart';
 
 import 'model/player_transition.dart';
 
-const Duration gameDuration = Duration(seconds: 10);
+const Duration defaultGameDuration = Duration(minutes: 5);
 const String kingChangeSoundUrl =
     "https://lasonotheque.org/UPLOAD/mp3/1554.mp3";
 const String minuteSoundUrl = "https://lasonotheque.org/UPLOAD/mp3/1830.mp3";
 const String overtimeStartSoundUrl =
     "https://lasonotheque.org/UPLOAD/mp3/0564.mp3";
-
 
 // TODO implement pause
 enum GamePhase { idle, paused, playing, overtime }
@@ -39,10 +39,17 @@ class _HomepageState extends State<Homepage> {
   String currentKing = '';
   GamePhase phase = GamePhase.idle;
 
+  // Main game timer
+  Duration gameDuration = defaultGameDuration;
   final CountdownController timerController = CountdownController();
+
+  // To count each interval between transition
   final Stopwatch stopwatch = Stopwatch();
+
+  // For sound playing purposes
   Timer? minuteTimer;
 
+  // Name of the server, format: <ip-address>:<port>
   String? serverHost;
 
   List<Widget> _buildChronoButtons(List<String> players) {
@@ -74,6 +81,8 @@ class _HomepageState extends State<Homepage> {
           return () {
             print('$player is now king');
 
+            AudioPlayer().play(UrlSource(kingChangeSoundUrl));
+
             setState(() {
               transitions.add(PlayerTransition(
                 currentKing,
@@ -84,7 +93,6 @@ class _HomepageState extends State<Homepage> {
               stopwatch.reset();
               currentKing = player;
             });
-            print('transitions: $transitions');
           };
         } else {
           return () {};
@@ -192,34 +200,54 @@ class _HomepageState extends State<Homepage> {
       body: Column(
         children: [
           Expanded(
-            flex: 1,
-            child: Countdown(
-              controller: timerController,
-              seconds: gameDuration.inSeconds,
-              build: (BuildContext context, double time) =>
-                  phase == GamePhase.overtime
-                      ? BlinkText(
-                          'OVERTIME',
-                          style: Theme.of(context).textTheme.displayMedium,
-                          endColor: Colors.orange,
-                        )
-                      : Text(
-                          '${twoDigits(time ~/ 60)}:${twoDigits((time % 60).toInt())}',
-                          style: Theme.of(context).textTheme.displayMedium,
-                        ),
-              interval: const Duration(milliseconds: 100),
-              onFinished: () {
-                AudioPlayer().play(UrlSource(overtimeStartSoundUrl));
-                setState(() {
-                  phase = GamePhase.overtime;
-                  timerController.restart();
-                  timerController.pause();
-                });
-              },
+            flex: 2,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Countdown(
+                  controller: timerController,
+                  seconds: gameDuration.inSeconds,
+                  build: (BuildContext context, double time) =>
+                      phase == GamePhase.overtime
+                          ? BlinkText(
+                              'OVERTIME',
+                              style: Theme.of(context).textTheme.displayMedium,
+                              endColor: Colors.orange,
+                            )
+                          : Text(
+                              '${twoDigits(time ~/ 60)}:${twoDigits((time % 60).toInt())}',
+                              style: Theme.of(context).textTheme.displayMedium,
+                            ),
+                  interval: const Duration(milliseconds: 100),
+                  onFinished: () {
+                    AudioPlayer().play(UrlSource(overtimeStartSoundUrl));
+                    setState(() {
+                      phase = GamePhase.overtime;
+                      timerController.restart();
+                      timerController.pause();
+                    });
+                  },
+                ),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    var chosenDuration = await showDurationPicker(
+                      context: context,
+                      initialTime: gameDuration,
+                    );
+                    setState(() {
+                      if (chosenDuration != null) {
+                        gameDuration = chosenDuration;
+                      }
+                    });
+                  },
+                  icon: const Icon(Icons.edit),
+                  label: const Text('Edit'),
+                ),
+              ],
             ),
           ),
           Expanded(
-            flex: 9,
+            flex: 8,
             child: Padding(
               padding: const EdgeInsets.all(8.0),
               child: GridView.count(
