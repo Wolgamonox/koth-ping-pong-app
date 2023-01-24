@@ -18,11 +18,10 @@ import 'model/player_transition.dart';
 const Duration defaultGameDuration = Duration(minutes: 5);
 const String kingChangeSoundUrl =
     "https://lasonotheque.org/UPLOAD/mp3/1554.mp3";
-const String minuteSoundUrl = "https://lasonotheque.org/UPLOAD/mp3/1830.mp3";
+const String gameStartSoundUrl = "https://lasonotheque.org/UPLOAD/mp3/2376.mp3";
 const String overtimeStartSoundUrl =
     "https://lasonotheque.org/UPLOAD/mp3/0564.mp3";
 
-// TODO implement pause
 enum GamePhase { idle, paused, playing, overtime }
 
 class Homepage extends StatefulWidget {
@@ -46,9 +45,6 @@ class _HomepageState extends State<Homepage> {
   // To count each interval between transition
   final Stopwatch stopwatch = Stopwatch();
 
-  // For sound playing purposes
-  Timer? minuteTimer;
-
   // Name of the server, format: <ip-address>:<port>
   String? serverHost;
 
@@ -68,6 +64,12 @@ class _HomepageState extends State<Homepage> {
       case GamePhase.idle:
         return () {
           print('Start timer with $player as king');
+
+          var audioPlayer = AudioPlayer();
+
+          audioPlayer.play(UrlSource(gameStartSoundUrl));
+          Future.delayed(const Duration(seconds: 6))
+              .then((value) => audioPlayer.stop());
 
           setState(() {
             phase = GamePhase.playing;
@@ -113,7 +115,7 @@ class _HomepageState extends State<Homepage> {
             }
 
             if (serverHost != null) {
-              sendToServer(transitions, serverHost!);
+              sendToServer(players, transitions, serverHost!);
             } else {
               print('No server connected');
             }
@@ -132,38 +134,15 @@ class _HomepageState extends State<Homepage> {
   }
 
   @override
-  void initState() {
-    super.initState();
-
-    // add a timer that makes a sound every minute
-    timerController.setOnStart(() {
-      minuteTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
-        AudioPlayer().play(UrlSource(minuteSoundUrl));
-      });
-    });
-
-    timerController.setOnResume(() {
-      minuteTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
-        AudioPlayer().play(UrlSource(minuteSoundUrl));
-      });
-    });
-
-    timerController.setOnPause(() {
-      minuteTimer?.cancel();
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Ping Pong Chrono'),
-        actions: phase == GamePhase.idle || phase == GamePhase.paused
+        actions: phase == GamePhase.idle
             ? [
                 IconButton(
                   onPressed: () async {
                     var result = await showQRCodePage(context);
-                    // TODO: Save server host to shared preferences.
                     setState(() {
                       serverHost = result;
                     });
@@ -197,6 +176,57 @@ class _HomepageState extends State<Homepage> {
               ]
             : null,
       ),
+      floatingActionButton: Visibility(
+        visible: phase == GamePhase.playing || phase == GamePhase.paused,
+        child: InkWell(
+          onLongPress: () {
+            // Restart game
+            setState(() {
+              transitions.clear();
+              currentKing = '';
+
+              timerController.restart();
+              timerController.pause();
+
+              stopwatch.stop();
+              stopwatch.reset();
+
+              phase = GamePhase.idle;
+            });
+          },
+          child: FloatingActionButton(
+            onPressed: () {
+              switch (phase) {
+                case GamePhase.paused:
+                  setState(() {
+                    timerController.resume();
+                    stopwatch.start();
+
+                    phase = GamePhase.playing;
+                  });
+                  break;
+                case GamePhase.playing:
+                  setState(() {
+                    timerController.pause();
+                    stopwatch.stop();
+
+                    phase = GamePhase.paused;
+                  });
+                  break;
+                case GamePhase.overtime:
+                case GamePhase.idle:
+                  // Will not happen (button is hidden, cannot pause)
+                  break;
+              }
+            },
+            child: phase == GamePhase.playing
+                ? const Icon(Icons.pause)
+                : phase == GamePhase.paused
+                    ? const Icon(Icons.play_arrow)
+                    : null,
+          ),
+        ),
+      ),
       body: Column(
         children: [
           Expanded(
@@ -229,17 +259,19 @@ class _HomepageState extends State<Homepage> {
                   },
                 ),
                 ElevatedButton.icon(
-                  onPressed: () async {
-                    var chosenDuration = await showDurationPicker(
-                      context: context,
-                      initialTime: gameDuration,
-                    );
-                    setState(() {
-                      if (chosenDuration != null) {
-                        gameDuration = chosenDuration;
-                      }
-                    });
-                  },
+                  onPressed: phase == GamePhase.idle
+                      ? () async {
+                          var chosenDuration = await showDurationPicker(
+                            context: context,
+                            initialTime: gameDuration,
+                          );
+                          setState(() {
+                            if (chosenDuration != null) {
+                              gameDuration = chosenDuration;
+                            }
+                          });
+                        }
+                      : null,
                   icon: const Icon(Icons.edit),
                   label: const Text('Edit'),
                 ),
@@ -265,13 +297,16 @@ class _HomepageState extends State<Homepage> {
 }
 
 Future<http.Response> sendToServer(
-    List<PlayerTransition> transitions, String hostName) {
+  List<String> players,
+  List<PlayerTransition> transitions,
+  String hostName,
+) {
   return http.post(
     Uri.parse('http://$hostName/upload'),
     headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
     },
-    body: jsonEncode(transitionsToJson(transitions)),
+    body: jsonEncode(dataToJson(players, transitions)),
   );
 }
 

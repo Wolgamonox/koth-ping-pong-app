@@ -10,8 +10,9 @@ class PlayerTransition {
   }
 }
 
-Map<String, dynamic> transitionsToJson(List<PlayerTransition> transitions) {
+Map<String, dynamic> dataToJson(List<String> players, List<PlayerTransition> transitions) {
   Map<String, dynamic> json = {
+    'players': players,
     'transitions': [
       for (var transition in transitions) {transition.name: transition.interval}
     ],
