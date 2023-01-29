@@ -1,8 +1,8 @@
 import 'dart:async';
-import 'dart:convert';
-import 'package:duration_picker/duration_picker.dart';
 
-import 'package:http/http.dart' as http;
+import 'package:duration_picker/duration_picker.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:flutter/material.dart';
 import 'package:koth_ping_pong_app/widgets/qr_code_reader.dart';
 import 'package:timer_count_down/timer_controller.dart';
@@ -10,6 +10,7 @@ import 'package:timer_count_down/timer_count_down.dart';
 import 'package:blinking_text/blinking_text.dart';
 import 'package:audioplayers/audioplayers.dart';
 
+import 'services/server_service.dart';
 import 'widgets/add_player_dialog.dart';
 import 'widgets/chrono_button.dart';
 
@@ -24,14 +25,16 @@ const String overtimeStartSoundUrl =
 
 enum GamePhase { idle, paused, playing, overtime }
 
-class Homepage extends StatefulWidget {
-  const Homepage({Key? key}) : super(key: key);
+class Homepage extends ConsumerStatefulWidget {
+  const Homepage({Key? key, required this.title}) : super(key: key);
+
+  final String title;
 
   @override
-  State<Homepage> createState() => _HomepageState();
+  ConsumerState<Homepage> createState() => _HomepageState();
 }
 
-class _HomepageState extends State<Homepage> {
+class _HomepageState extends ConsumerState<Homepage> {
   final List<PlayerTransition> transitions = [];
   final List<String> players = [];
 
@@ -45,9 +48,6 @@ class _HomepageState extends State<Homepage> {
   // To count each interval between transition
   final Stopwatch stopwatch = Stopwatch();
 
-  // Name of the server, format: <ip-address>:<port>
-  String? serverHost;
-
   List<Widget> _buildChronoButtons(List<String> players) {
     return [
       for (var player in players)
@@ -60,10 +60,46 @@ class _HomepageState extends State<Homepage> {
   }
 
   Function() _getButtonAction(String player) {
+    final kothServer = ref.watch(kothServerServiceProvider);
+    final kothServerService = ref.read(kothServerServiceProvider.notifier);
+
     switch (phase) {
       case GamePhase.idle:
         return () {
-          print('Start timer with $player as king');
+          // check if connected
+          kothServerService.checkConnection();
+          if (!kothServer.connected) {
+            ScaffoldMessenger.of(context).showMaterialBanner(
+              MaterialBanner(
+                padding: const EdgeInsets.all(8.0),
+                content: const Text(
+                    'Are you sure ? You are not connected to a server.'),
+                leading: const Icon(Icons.warning),
+                backgroundColor: Colors.amberAccent,
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).hideCurrentMaterialBanner();
+                    },
+                    child: const Text('Dismiss'),
+                  ),
+                  TextButton(
+                    onPressed: () async {
+                      ScaffoldMessenger.of(context).hideCurrentMaterialBanner();
+                      var result = await showQRCodePage(context);
+                      if (result != null) {
+                        kothServerService.setHostName(result);
+                        kothServerService.checkConnection();
+                      }
+                    },
+                    child: const Text('Scan Code'),
+                  ),
+                ],
+              ),
+            );
+
+            return;
+          }
 
           var audioPlayer = AudioPlayer();
 
@@ -81,8 +117,6 @@ class _HomepageState extends State<Homepage> {
       case GamePhase.playing:
         if (player != currentKing) {
           return () {
-            print('$player is now king');
-
             AudioPlayer().play(UrlSource(kingChangeSoundUrl));
 
             setState(() {
@@ -101,8 +135,6 @@ class _HomepageState extends State<Homepage> {
         }
       case GamePhase.overtime:
         return () {
-          print('$player is last king');
-
           setState(() {
             // add time of king before
             transitions.add(PlayerTransition(
@@ -114,10 +146,16 @@ class _HomepageState extends State<Homepage> {
               transitions.add(PlayerTransition(player, 1));
             }
 
-            if (serverHost != null) {
-              sendToServer(players, transitions, serverHost!);
+            kothServerService.checkConnection();
+            if (kothServer.connected) {
+              kothServerService.sendToServer(
+                players,
+                transitions,
+              );
             } else {
-              print('No server connected');
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Not connected to the server')),
+              );
             }
 
             stopwatch.stop();
@@ -135,21 +173,24 @@ class _HomepageState extends State<Homepage> {
 
   @override
   Widget build(BuildContext context) {
+    final kothServer = ref.watch(kothServerServiceProvider);
+    final kothServerService = ref.read(kothServerServiceProvider.notifier);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Ping Pong Chrono'),
+        title: Text(widget.title),
         actions: phase == GamePhase.idle
             ? [
                 IconButton(
                   onPressed: () async {
                     var result = await showQRCodePage(context);
-                    setState(() {
-                      serverHost = result;
-                    });
+                    if (result != null) {
+                      kothServerService.setHostName(result);
+                      kothServerService.checkConnection();
+                    }
                   },
                   icon: Icon(
-                    Icons.qr_code,
-                    color: serverHost != null ? Colors.green : Colors.red,
+                    kothServer.connected ? Icons.wifi : Icons.qr_code,
                   ),
                 ),
                 IconButton(
@@ -294,20 +335,6 @@ class _HomepageState extends State<Homepage> {
       ),
     );
   }
-}
-
-Future<http.Response> sendToServer(
-  List<String> players,
-  List<PlayerTransition> transitions,
-  String hostName,
-) {
-  return http.post(
-    Uri.parse('http://$hostName/upload'),
-    headers: <String, String>{
-      'Content-Type': 'application/json; charset=UTF-8',
-    },
-    body: jsonEncode(dataToJson(players, transitions)),
-  );
 }
 
 String twoDigits(int n) => n.toString().padLeft(2, '0');
