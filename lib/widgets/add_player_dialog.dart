@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-Future<String?> openAddPlayerDialog(BuildContext context) async {
-  return await showDialog<String>(
+import '../model/player.dart';
+import '../services/server_service.dart';
+
+Future<Player?> openAddPlayerDialog(BuildContext context) async {
+  return await showDialog<Player>(
     context: context,
     builder: (context) {
       return const AddPlayerDialog();
@@ -9,30 +13,35 @@ Future<String?> openAddPlayerDialog(BuildContext context) async {
   );
 }
 
-class AddPlayerDialog extends StatefulWidget {
+class AddPlayerDialog extends ConsumerStatefulWidget {
   const AddPlayerDialog({Key? key}) : super(key: key);
 
   @override
-  State<AddPlayerDialog> createState() => _AddPlayerDialogState();
+  ConsumerState<AddPlayerDialog> createState() => _AddPlayerDialogState();
 }
 
-class _AddPlayerDialogState extends State<AddPlayerDialog> {
+class _AddPlayerDialogState extends ConsumerState<AddPlayerDialog> {
   TextEditingController controller = TextEditingController();
 
   bool buttonEnabled = false;
 
   @override
   Widget build(BuildContext context) {
+    final kothServerService = ref.read(kothServerServiceProvider.notifier);
+
     return AlertDialog(
       title: const Text('Add player'),
       content: TextField(
         autofocus: true,
         onEditingComplete: buttonEnabled
-            ? () => Navigator.pop(context, controller.text)
+            ? () async => Navigator.pop(
+                  context,
+                  await kothServerService.getPlayer(controller.text.trim()),
+                )
             : null,
         onChanged: (value) {
           setState(() {
-            buttonEnabled = controller.text.length > 2;
+            buttonEnabled = controller.text.isNotEmpty;
           });
         },
         controller: controller,
@@ -44,7 +53,10 @@ class _AddPlayerDialogState extends State<AddPlayerDialog> {
         ),
         TextButton(
           onPressed: buttonEnabled
-              ? () => Navigator.pop(context, controller.text.trim())
+              ? () async => Navigator.pop(
+                    context,
+                    await kothServerService.getPlayer(controller.text.trim()),
+                  )
               : null,
           child: const Text('Add'),
         ),

@@ -4,7 +4,6 @@ import 'package:duration_picker/duration_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:flutter/material.dart';
-import 'package:koth_ping_pong_app/widgets/qr_code_reader.dart';
 import 'package:timer_count_down/timer_controller.dart';
 import 'package:timer_count_down/timer_count_down.dart';
 import 'package:blinking_text/blinking_text.dart';
@@ -15,8 +14,9 @@ import 'widgets/add_player_dialog.dart';
 import 'widgets/chrono_button.dart';
 
 import 'model/player_transition.dart';
+import 'model/player.dart';
 
-const Duration defaultGameDuration = Duration(minutes: 5);
+const Duration defaultGameDuration = Duration(seconds: 10);
 const String kingChangeSoundUrl =
     "https://lasonotheque.org/UPLOAD/mp3/1554.mp3";
 const String gameStartSoundUrl = "https://lasonotheque.org/UPLOAD/mp3/2376.mp3";
@@ -36,9 +36,9 @@ class Homepage extends ConsumerStatefulWidget {
 
 class _HomepageState extends ConsumerState<Homepage> {
   final List<PlayerTransition> transitions = [];
-  final List<String> players = [];
+  final List<Player> players = [];
 
-  String currentKing = '';
+  Player? currentKing;
   GamePhase phase = GamePhase.idle;
 
   // Main game timer
@@ -48,59 +48,23 @@ class _HomepageState extends ConsumerState<Homepage> {
   // To count each interval between transition
   final Stopwatch stopwatch = Stopwatch();
 
-  List<Widget> _buildChronoButtons(List<String> players) {
+  List<Widget> _buildChronoButtons(List<Player> players) {
     return [
       for (var player in players)
         ChronoButton(
-          player: player,
+          playerFullName: player.fullName,
           color: player == currentKing ? Colors.amber : Colors.lightGreen,
           onPressed: _getButtonAction(player),
         ),
     ];
   }
 
-  Function() _getButtonAction(String player) {
-    final kothServer = ref.watch(kothServerServiceProvider);
+  Function() _getButtonAction(Player player) {
     final kothServerService = ref.read(kothServerServiceProvider.notifier);
 
     switch (phase) {
       case GamePhase.idle:
         return () {
-          // check if connected
-          kothServerService.checkConnection();
-          if (!kothServer.connected) {
-            ScaffoldMessenger.of(context).showMaterialBanner(
-              MaterialBanner(
-                padding: const EdgeInsets.all(8.0),
-                content: const Text(
-                    'Are you sure ? You are not connected to a server.'),
-                leading: const Icon(Icons.warning),
-                backgroundColor: Colors.amberAccent,
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).hideCurrentMaterialBanner();
-                    },
-                    child: const Text('Dismiss'),
-                  ),
-                  TextButton(
-                    onPressed: () async {
-                      ScaffoldMessenger.of(context).hideCurrentMaterialBanner();
-                      var result = await showQRCodePage(context);
-                      if (result != null) {
-                        kothServerService.setHostName(result);
-                        kothServerService.checkConnection();
-                      }
-                    },
-                    child: const Text('Scan Code'),
-                  ),
-                ],
-              ),
-            );
-
-            return;
-          }
-
           var audioPlayer = AudioPlayer();
 
           audioPlayer.play(UrlSource(gameStartSoundUrl));
@@ -121,7 +85,7 @@ class _HomepageState extends ConsumerState<Homepage> {
 
             setState(() {
               transitions.add(PlayerTransition(
-                currentKing,
+                currentKing!,
                 stopwatch.elapsed.inSeconds,
               ));
 
@@ -138,7 +102,7 @@ class _HomepageState extends ConsumerState<Homepage> {
           setState(() {
             // add time of king before
             transitions.add(PlayerTransition(
-              currentKing,
+              currentKing!,
               stopwatch.elapsed.inSeconds,
             ));
 
@@ -146,22 +110,15 @@ class _HomepageState extends ConsumerState<Homepage> {
               transitions.add(PlayerTransition(player, 1));
             }
 
-            kothServerService.checkConnection();
-            if (kothServer.connected) {
-              kothServerService.sendToServer(
-                players,
-                transitions,
-              );
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Not connected to the server')),
-              );
-            }
+            kothServerService.sendToServer(
+              players,
+              transitions,
+            );
 
             stopwatch.stop();
             stopwatch.reset();
 
-            currentKing = '';
+            currentKing = null;
             transitions.clear();
             phase = GamePhase.idle;
           });
@@ -173,9 +130,6 @@ class _HomepageState extends ConsumerState<Homepage> {
 
   @override
   Widget build(BuildContext context) {
-    final kothServer = ref.watch(kothServerServiceProvider);
-    final kothServerService = ref.read(kothServerServiceProvider.notifier);
-
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
@@ -183,22 +137,10 @@ class _HomepageState extends ConsumerState<Homepage> {
             ? [
                 IconButton(
                   onPressed: () async {
-                    var result = await showQRCodePage(context);
-                    if (result != null) {
-                      kothServerService.setHostName(result);
-                      kothServerService.checkConnection();
-                    }
-                  },
-                  icon: Icon(
-                    kothServer.connected ? Icons.wifi : Icons.qr_code,
-                  ),
-                ),
-                IconButton(
-                  onPressed: () async {
-                    String? result = await openAddPlayerDialog(context);
-                    if (result != null) {
+                    Player? newPlayer = await openAddPlayerDialog(context);
+                    if (newPlayer != null) {
                       setState(() {
-                        players.add(result);
+                        players.add(newPlayer);
                       });
                     }
                   },
@@ -209,7 +151,7 @@ class _HomepageState extends ConsumerState<Homepage> {
                     setState(() {
                       players.clear();
                       transitions.clear();
-                      currentKing = '';
+                      currentKing = null;
                     });
                   },
                   icon: const Icon(Icons.refresh),
@@ -224,7 +166,7 @@ class _HomepageState extends ConsumerState<Homepage> {
             // Restart game
             setState(() {
               transitions.clear();
-              currentKing = '';
+              currentKing = null;
 
               timerController.restart();
               timerController.pause();
@@ -323,12 +265,13 @@ class _HomepageState extends ConsumerState<Homepage> {
             flex: 8,
             child: Padding(
               padding: const EdgeInsets.all(8.0),
+              // TODO remove future builder
               child: GridView.count(
-                crossAxisCount: 2,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-                children: _buildChronoButtons(players),
-              ),
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 10,
+                        mainAxisSpacing: 10,
+                        children: _buildChronoButtons(players),
+                      )
             ),
           ),
         ],

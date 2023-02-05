@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 class ChronoButton extends StatelessWidget {
   const ChronoButton(
       {Key? key,
-      required this.player,
+      required this.playerFullName,
       required this.color,
       required this.onPressed})
       : super(key: key);
 
   final Function() onPressed;
-  final String player;
+  final String playerFullName;
   final Color color;
 
   @override
@@ -20,7 +20,7 @@ class ChronoButton extends StatelessWidget {
         backgroundColor: color,
       ),
       child: Text(
-        player,
+        playerFullName,
         style: Theme.of(context).textTheme.titleLarge,
       ),
     );

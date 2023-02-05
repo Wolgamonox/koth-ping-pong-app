@@ -4,7 +4,10 @@ import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import '../model/player.dart';
 import '../model/player_transition.dart';
+
+const String hostName = "127.0.0.1:8000";
 
 final kothServerServiceProvider =
     StateNotifierProvider<KothServerService, KothServer>(
@@ -13,49 +16,36 @@ final kothServerServiceProvider =
 
 @immutable
 class KothServer {
-  const KothServer(this.hostName, this.connected);
+  const KothServer(this.hostName);
 
   final String? hostName;
-  final bool connected;
 
-  Uri get pingEndpointUrl => Uri.parse('http://$hostName/ping');
+  Uri get uploadEndpointUrl => Uri.parse('http://$hostName/games/upload');
 
-  Uri get uploadEndpointUrl => Uri.parse('http://$hostName/upload');
+  Uri getPlayerUrl(String username) =>
+      Uri.parse('http://$hostName/get_player?username=$username');
 
-  KothServer copyWith({String? hostName, bool? connected}) {
-    return KothServer(hostName ?? this.hostName, connected ?? this.connected);
+
+  KothServer copyWith({String? hostName}) {
+    return KothServer(hostName ?? this.hostName);
   }
 }
 
 class KothServerService extends StateNotifier<KothServer> {
-  KothServerService() : super(const KothServer(null, false));
+  KothServerService() : super(const KothServer(hostName));
 
-  void setHostName(String hostName) {
-    state = state.copyWith(hostName: hostName);
-  }
-
-  Future<void> checkConnection() async {
-    if (state.hostName != null) {
-      await http
-          .get(state.pingEndpointUrl)
-          .timeout(const Duration(seconds: 10))
-          .then(
-        (value) {
-          state = state.copyWith(connected: true);
-        },
-        onError: (error, stacktrace) {
-          state = state.copyWith(connected: false);
-        },
-      );
-    }
+  Future<Player> getPlayer(String username) async {
+    var response = (await http.get(state.getPlayerUrl(username))).body;
+    return Player.fromJson(jsonDecode(response));
   }
 
   Future<http.Response> sendToServer(
-    List<String> players,
+    List<Player> players,
     List<PlayerTransition> transitions,
   ) {
     return http.post(
-      Uri.parse('http://${state.hostName}/upload'),
+      state.uploadEndpointUrl,
+      //TODO add AUTH token
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
