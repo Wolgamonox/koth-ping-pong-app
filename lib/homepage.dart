@@ -18,7 +18,7 @@ import 'widgets/chrono_button.dart';
 import 'model/player_transition.dart';
 import 'model/player.dart';
 
-const Duration defaultGameDuration = Duration(seconds: 10);
+const Duration defaultGameDuration = Duration(minutes: 10);
 const String kingChangeSoundUrl =
     "https://lasonotheque.org/UPLOAD/mp3/1554.mp3";
 const String gameStartSoundUrl = "https://lasonotheque.org/UPLOAD/mp3/2376.mp3";

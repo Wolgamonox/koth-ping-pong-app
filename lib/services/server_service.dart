@@ -7,7 +7,7 @@ import 'package:http/http.dart' as http;
 import '../model/player.dart';
 import '../model/player_transition.dart';
 
-const String hostName = "127.0.0.1:8000";
+const String hostName = "wolgamonox.pythonanywhere.com";
 
 final kothServerServiceProvider =
     StateNotifierProvider<KothServerService, KothServer>(
