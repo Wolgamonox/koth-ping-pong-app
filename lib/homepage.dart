@@ -4,6 +4,8 @@ import 'package:duration_picker/duration_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:flutter/material.dart';
+import 'package:koth_ping_pong_app/services/auth.dart';
+import 'package:koth_ping_pong_app/widgets/qr_code_reader.dart';
 import 'package:timer_count_down/timer_controller.dart';
 import 'package:timer_count_down/timer_count_down.dart';
 import 'package:blinking_text/blinking_text.dart';
@@ -137,11 +139,33 @@ class _HomepageState extends ConsumerState<Homepage> {
             ? [
                 IconButton(
                   onPressed: () async {
+                    var result = await showQRCodePage(context);
+                    if (result != null) {
+                      ref
+                          .watch(kothAuthServiceProvider.notifier)
+                          .setAuthToken(result);
+                    }
+                  },
+                  icon: Icon(
+                    ref.watch(kothAuthServiceProvider) ==
+                            AuthenticationStatus.authenticated
+                        ? Icons.wifi
+                        : Icons.qr_code,
+                  ),
+                ),
+                IconButton(
+                  onPressed: () async {
+                    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
                     Player? newPlayer = await openAddPlayerDialog(context);
                     if (newPlayer != null) {
                       setState(() {
                         players.add(newPlayer);
                       });
+                    } else {
+                      scaffoldMessenger.showSnackBar(
+                        const SnackBar(content: Text('Player not found')),
+                      );
                     }
                   },
                   icon: const Icon(Icons.add),
@@ -264,15 +288,14 @@ class _HomepageState extends ConsumerState<Homepage> {
           Expanded(
             flex: 8,
             child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              // TODO remove future builder
-              child: GridView.count(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 10,
-                        mainAxisSpacing: 10,
-                        children: _buildChronoButtons(players),
-                      )
-            ),
+                padding: const EdgeInsets.all(8.0),
+                // TODO remove future builder
+                child: GridView.count(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                  children: _buildChronoButtons(players),
+                )),
           ),
         ],
       ),

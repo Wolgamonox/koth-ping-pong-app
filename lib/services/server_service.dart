@@ -34,9 +34,13 @@ class KothServer {
 class KothServerService extends StateNotifier<KothServer> {
   KothServerService() : super(const KothServer(hostName));
 
-  Future<Player> getPlayer(String username) async {
-    var response = (await http.get(state.getPlayerUrl(username))).body;
-    return Player.fromJson(jsonDecode(response));
+  Future<Player?> getPlayer(String username) async {
+    var response = await http.get(state.getPlayerUrl(username));
+    if (response.statusCode == 200) {
+      return Player.fromJson(jsonDecode(response.body));
+    } else {
+      return null;
+    }
   }
 
   Future<http.Response> sendToServer(
