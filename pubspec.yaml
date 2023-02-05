@@ -32,7 +32,7 @@ dependencies:
   timer_count_down: ^2.2.2
   blinking_text: ^1.0.2
   mobile_scanner: ^2.1.0
-  audioplayers: ^2.0.0
+  audioplayers: ^3.0.0
   http: ^0.13.5
   duration_picker: ^1.1.1
 
