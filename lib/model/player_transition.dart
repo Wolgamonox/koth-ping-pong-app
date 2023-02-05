@@ -1,20 +1,28 @@
-class PlayerTransition {
-  final String name;
-  final int interval;
+import 'player.dart';
 
-  PlayerTransition(this.name, this.interval);
+class PlayerTransition {
+  final Player player;
+  final int duration;
+
+  PlayerTransition(this.player, this.duration);
 
   @override
   String toString() {
-    return '$name:$interval';
+    return '$player:$duration';
   }
 }
 
-Map<String, dynamic> dataToJson(List<String> players, List<PlayerTransition> transitions) {
+Map<String, dynamic> dataToJson(List<Player> players, List<PlayerTransition> transitions) {
   Map<String, dynamic> json = {
-    'players': players,
+    'players': [
+      for (var player in players)
+        player.id
+    ],
     'transitions': [
-      for (var transition in transitions) {transition.name: transition.interval}
+      for (var transition in transitions) {
+        "player": transition.player.id,
+        "duration": transition.duration
+      }
     ],
   };
 
