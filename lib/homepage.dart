@@ -61,7 +61,7 @@ class _HomepageState extends ConsumerState<Homepage> {
     ];
   }
 
-  Function() _getButtonAction(Player player) {
+  Function()? _getButtonAction(Player player) {
     final kothServerService = ref.read(kothServerServiceProvider.notifier);
 
     switch (phase) {
@@ -126,7 +126,7 @@ class _HomepageState extends ConsumerState<Homepage> {
           });
         };
       case GamePhase.paused:
-        return () {};
+        return null;
     }
   }
 

@@ -8,7 +8,7 @@ class ChronoButton extends StatelessWidget {
       required this.onPressed})
       : super(key: key);
 
-  final Function() onPressed;
+  final Function()? onPressed;
   final String playerFullName;
   final Color color;
 
