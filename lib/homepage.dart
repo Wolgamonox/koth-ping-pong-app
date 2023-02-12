@@ -19,11 +19,6 @@ import 'model/player_transition.dart';
 import 'model/player.dart';
 
 const Duration defaultGameDuration = Duration(minutes: 10);
-const String kingChangeSoundUrl =
-    "https://lasonotheque.org/UPLOAD/mp3/1554.mp3";
-const String gameStartSoundUrl = "https://lasonotheque.org/UPLOAD/mp3/2376.mp3";
-const String overtimeStartSoundUrl =
-    "https://lasonotheque.org/UPLOAD/mp3/0564.mp3";
 
 enum GamePhase { idle, paused, playing, overtime }
 
@@ -50,6 +45,8 @@ class _HomepageState extends ConsumerState<Homepage> {
   // To count each interval between transition
   final Stopwatch stopwatch = Stopwatch();
 
+  final AudioPlayer audioPlayer = AudioPlayer();
+
   List<Widget> _buildChronoButtons(List<Player> players) {
     return [
       for (var player in players)
@@ -67,11 +64,7 @@ class _HomepageState extends ConsumerState<Homepage> {
     switch (phase) {
       case GamePhase.idle:
         return () {
-          var audioPlayer = AudioPlayer();
-
-          audioPlayer.play(UrlSource(gameStartSoundUrl));
-          Future.delayed(const Duration(seconds: 6))
-              .then((value) => audioPlayer.stop());
+          audioPlayer.play(AssetSource('sounds/game_start.mp3'));
 
           setState(() {
             phase = GamePhase.playing;
@@ -83,7 +76,7 @@ class _HomepageState extends ConsumerState<Homepage> {
       case GamePhase.playing:
         if (player != currentKing) {
           return () {
-            AudioPlayer().play(UrlSource(kingChangeSoundUrl));
+            audioPlayer.play(AssetSource('sounds/king_change.mp3'));
 
             setState(() {
               transitions.add(PlayerTransition(
@@ -101,6 +94,9 @@ class _HomepageState extends ConsumerState<Homepage> {
         }
       case GamePhase.overtime:
         return () {
+
+          audioPlayer.play(AssetSource('sounds/game_stop.mp3'));
+
           setState(() {
             // add time of king before
             transitions.add(PlayerTransition(
@@ -257,7 +253,7 @@ class _HomepageState extends ConsumerState<Homepage> {
                             ),
                   interval: const Duration(milliseconds: 100),
                   onFinished: () {
-                    AudioPlayer().play(UrlSource(overtimeStartSoundUrl));
+                    audioPlayer.play(AssetSource('sounds/overtime.mp3'));
                     setState(() {
                       phase = GamePhase.overtime;
                       timerController.restart();

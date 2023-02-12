@@ -16,26 +16,21 @@ final kothServerServiceProvider =
 
 @immutable
 class KothServer {
-  const KothServer(this.hostName);
+  const KothServer();
 
-  final String? hostName;
-
-  Uri get uploadEndpointUrl => Uri.parse('http://$hostName/games/upload');
-
-  Uri getPlayerUrl(String username) =>
-      Uri.parse('http://$hostName/get_player?username=$username');
-
-
-  KothServer copyWith({String? hostName}) {
-    return KothServer(hostName ?? this.hostName);
-  }
+// Useless for now
+// might be needed when we add token identification
 }
 
 class KothServerService extends StateNotifier<KothServer> {
-  KothServerService() : super(const KothServer(hostName));
+  KothServerService() : super(const KothServer());
 
   Future<Player?> getPlayer(String username) async {
-    var response = await http.get(state.getPlayerUrl(username));
+    var response = await http.get(Uri.https(
+      hostName,
+      '/get-player',
+      {'username': username},
+    ));
     if (response.statusCode == 200) {
       return Player.fromJson(jsonDecode(response.body));
     } else {
@@ -48,7 +43,7 @@ class KothServerService extends StateNotifier<KothServer> {
     List<PlayerTransition> transitions,
   ) {
     return http.post(
-      state.uploadEndpointUrl,
+      Uri.https(hostName, '/games/upload'),
       //TODO add AUTH token
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
