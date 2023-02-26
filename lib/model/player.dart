@@ -12,6 +12,10 @@ class Player extends Equatable {
         username = json['username'],
         fullName = json['full_name'];
 
+
+  String get firstName => fullName.split(" ")[0];
+  String get lastName => fullName.split(" ")[1];
+
   @override
   String toString() {
     return username;

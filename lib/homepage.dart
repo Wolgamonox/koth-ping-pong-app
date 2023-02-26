@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:duration_picker/duration_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -19,6 +17,12 @@ import 'model/player_transition.dart';
 import 'model/player.dart';
 
 const Duration defaultGameDuration = Duration(minutes: 10);
+
+const LinearGradient portraitGradient = LinearGradient(
+  begin: Alignment.centerLeft,
+  end: Alignment.centerRight,
+  colors: <Color>[Color(0xfeeef2f3), Color(0xff8e9eab)],
+);
 
 enum GamePhase { idle, paused, playing, overtime }
 
@@ -51,7 +55,7 @@ class _HomepageState extends ConsumerState<Homepage> {
     return [
       for (var player in players)
         ChronoButton(
-          playerFullName: player.fullName,
+          playerFullName: player.firstName,
           color: player == currentKing ? Colors.amber : Colors.lightGreen,
           onPressed: _getButtonAction(player),
         ),
@@ -94,7 +98,6 @@ class _HomepageState extends ConsumerState<Homepage> {
         }
       case GamePhase.overtime:
         return () {
-
           audioPlayer.play(AssetSource('sounds/game_stop.mp3'));
 
           setState(() {
@@ -130,25 +133,32 @@ class _HomepageState extends ConsumerState<Homepage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Text(widget.title, style: const TextStyle(color: Colors.black)),
+        elevation: 2.0,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: portraitGradient,
+          ),
+        ),
         actions: phase == GamePhase.idle
             ? [
-                IconButton(
-                  onPressed: () async {
-                    var result = await showQRCodePage(context);
-                    if (result != null) {
-                      ref
-                          .watch(kothAuthServiceProvider.notifier)
-                          .setAuthToken(result);
-                    }
-                  },
-                  icon: Icon(
-                    ref.watch(kothAuthServiceProvider) ==
-                            AuthenticationStatus.authenticated
-                        ? Icons.wifi
-                        : Icons.qr_code,
-                  ),
-                ),
+                // TODO: Implement auth for uploading
+                // IconButton(
+                //   onPressed: () async {
+                //     var result = await showQRCodePage(context);
+                //     if (result != null) {
+                //       ref
+                //           .watch(kothAuthServiceProvider.notifier)
+                //           .setAuthToken(result);
+                //     }
+                //   },
+                //   icon: Icon(
+                //     ref.watch(kothAuthServiceProvider) ==
+                //             AuthenticationStatus.authenticated
+                //         ? Icons.wifi
+                //         : Icons.qr_code,
+                //   ),
+                // ),
                 IconButton(
                   onPressed: () async {
                     final scaffoldMessenger = ScaffoldMessenger.of(context);
@@ -164,7 +174,7 @@ class _HomepageState extends ConsumerState<Homepage> {
                       );
                     }
                   },
-                  icon: const Icon(Icons.add),
+                  icon: const Icon(Icons.add, color: Colors.black),
                 ),
                 IconButton(
                   onPressed: () {
@@ -174,7 +184,7 @@ class _HomepageState extends ConsumerState<Homepage> {
                       currentKing = null;
                     });
                   },
-                  icon: const Icon(Icons.refresh),
+                  icon: const Icon(Icons.refresh, color: Colors.black),
                 ),
               ]
             : null,
@@ -198,6 +208,7 @@ class _HomepageState extends ConsumerState<Homepage> {
             });
           },
           child: FloatingActionButton(
+            backgroundColor: const Color(0xff0a2e36),
             onPressed: () {
               switch (phase) {
                 case GamePhase.paused:
@@ -235,22 +246,49 @@ class _HomepageState extends ConsumerState<Homepage> {
           Expanded(
             flex: 2,
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Countdown(
                   controller: timerController,
                   seconds: gameDuration.inSeconds,
-                  build: (BuildContext context, double time) =>
-                      phase == GamePhase.overtime
+                  build: (BuildContext context, double time) => Directionality(
+                    textDirection: TextDirection.rtl,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                      ),
+                      onPressed: phase == GamePhase.idle
+                          ? () async {
+                              var chosenDuration = await showDurationPicker(
+                                context: context,
+                                initialTime: gameDuration,
+                              );
+                              setState(() {
+                                if (chosenDuration != null) {
+                                  gameDuration = chosenDuration;
+                                }
+                              });
+                            }
+                          : null,
+                      child: phase == GamePhase.overtime
                           ? BlinkText(
                               'OVERTIME',
-                              style: Theme.of(context).textTheme.displayMedium,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .displayMedium
+                                  ?.copyWith(color: Colors.black87),
                               endColor: Colors.orange,
                             )
                           : Text(
                               '${twoDigits(time ~/ 60)}:${twoDigits((time % 60).toInt())}',
-                              style: Theme.of(context).textTheme.displayMedium,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .displayMedium
+                                  ?.copyWith(color: Colors.black87),
                             ),
+                    ),
+                  ),
                   interval: const Duration(milliseconds: 100),
                   onFinished: () {
                     audioPlayer.play(AssetSource('sounds/overtime.mp3'));
@@ -260,23 +298,6 @@ class _HomepageState extends ConsumerState<Homepage> {
                       timerController.pause();
                     });
                   },
-                ),
-                ElevatedButton.icon(
-                  onPressed: phase == GamePhase.idle
-                      ? () async {
-                          var chosenDuration = await showDurationPicker(
-                            context: context,
-                            initialTime: gameDuration,
-                          );
-                          setState(() {
-                            if (chosenDuration != null) {
-                              gameDuration = chosenDuration;
-                            }
-                          });
-                        }
-                      : null,
-                  icon: const Icon(Icons.edit),
-                  label: const Text('Edit'),
                 ),
               ],
             ),
