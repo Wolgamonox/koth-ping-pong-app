@@ -25,19 +25,21 @@ class _AddPlayerDialogState extends ConsumerState<AddPlayerDialog> {
 
   bool buttonEnabled = false;
 
+  void _onPlayerUsernameEntered() async {
+    Navigator.pop(
+        context,
+        await ref.read(kothServerServiceProvider.notifier).getPlayer(controller.text.trim()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final kothServerService = ref.read(kothServerServiceProvider.notifier);
-
     return AlertDialog(
       title: const Text('Add player'),
       content: TextField(
         autofocus: true,
         onEditingComplete: buttonEnabled
-            ? () async => Navigator.pop(
-                  context,
-                  await kothServerService.getPlayer(controller.text.trim()),
-                )
+            ? _onPlayerUsernameEntered
             : null,
         onChanged: (value) {
           setState(() {
@@ -53,10 +55,7 @@ class _AddPlayerDialogState extends ConsumerState<AddPlayerDialog> {
         ),
         TextButton(
           onPressed: buttonEnabled
-              ? () async => Navigator.pop(
-                    context,
-                    await kothServerService.getPlayer(controller.text.trim()),
-                  )
+              ? _onPlayerUsernameEntered
               : null,
           child: const Text('Add'),
         ),
