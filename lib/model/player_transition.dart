@@ -1,28 +1,30 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'player.dart';
 
-class PlayerTransition {
-  final Player player;
-  final int duration;
+part 'player_transition.freezed.dart';
 
-  PlayerTransition(this.player, this.duration);
+part 'player_transition.g.dart';
 
-  @override
-  String toString() {
-    return '$player:$duration';
-  }
+@freezed
+class PlayerTransition with _$PlayerTransition {
+  const PlayerTransition._();
+
+  const factory PlayerTransition({
+    required Player player,
+    required int duration, // in seconds
+  }) = _PlayerTransition;
+
+  factory PlayerTransition.fromJson(Map<String, Object?> json) =>
+      _$PlayerTransitionFromJson(json);
 }
 
-Map<String, dynamic> dataToJson(List<Player> players, List<PlayerTransition> transitions) {
+Map<String, dynamic> dataToJson(
+    List<Player> players, List<PlayerTransition> transitions) {
   Map<String, dynamic> json = {
-    'players': [
-      for (var player in players)
-        player.id
-    ],
+    'players': [for (var player in players) player.id],
     'transitions': [
-      for (var transition in transitions) {
-        "player": transition.player.id,
-        "duration": transition.duration
-      }
+      for (var transition in transitions)
+        {"player": transition.player.id, "duration": transition.duration}
     ],
   };
 
