@@ -14,7 +14,7 @@ Future<Player?> openAddPlayerDialog(BuildContext context) async {
 }
 
 class AddPlayerDialog extends ConsumerStatefulWidget {
-  const AddPlayerDialog({Key? key}) : super(key: key);
+  const AddPlayerDialog({super.key});
 
   @override
   ConsumerState<AddPlayerDialog> createState() => _AddPlayerDialogState();

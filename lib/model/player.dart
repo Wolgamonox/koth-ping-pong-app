@@ -1,26 +1,22 @@
-import 'package:equatable/equatable.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:flutter/foundation.dart';
 
-class Player extends Equatable {
-  final int id;
-  final String username;
-  final String fullName;
+part 'player.freezed.dart';
 
-  const Player(this.id, this.username, this.fullName);
+part 'player.g.dart';
 
-  Player.fromJson(Map<String, dynamic> json)
-      : id = json['id'],
-        username = json['username'],
-        fullName = json['full_name'];
+@freezed
+class Player with _$Player {
+  const Player._();
+  const factory Player({
+    required int id,
+    required String username,
+    required String fullName,
+  }) = _Player;
 
+  factory Player.fromJson(Map<String, Object?> json)
+  => _$PlayerFromJson(json);
 
   String get firstName => fullName.split(" ")[0];
   String get lastName => fullName.split(" ")[1];
-
-  @override
-  String toString() {
-    return username;
-  }
-
-  @override
-  List<Object?> get props => [id, username, fullName];
 }

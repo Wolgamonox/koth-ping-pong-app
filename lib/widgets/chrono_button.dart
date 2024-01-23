@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 
 class ChronoButton extends StatelessWidget {
   const ChronoButton(
-      {Key? key,
+      {super.key,
       required this.playerFullName,
       required this.color,
-      required this.onPressed})
-      : super(key: key);
+      required this.onPressed});
 
   final Function()? onPressed;
   final String playerFullName;
