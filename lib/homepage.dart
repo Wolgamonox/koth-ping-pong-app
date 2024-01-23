@@ -2,8 +2,6 @@ import 'package:duration_picker/duration_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:flutter/material.dart';
-import 'package:koth_ping_pong_app/services/auth.dart';
-import 'package:koth_ping_pong_app/widgets/qr_code_reader.dart';
 import 'package:timer_count_down/timer_controller.dart';
 import 'package:timer_count_down/timer_count_down.dart';
 import 'package:blinking_text/blinking_text.dart';
@@ -28,7 +26,6 @@ enum GamePhase { idle, paused, playing, overtime }
 
 class Homepage extends ConsumerStatefulWidget {
   const Homepage({Key? key, required this.title}) : super(key: key);
-
   final String title;
 
   @override
@@ -212,6 +209,7 @@ class _HomepageState extends ConsumerState<Homepage> {
             onPressed: () {
               switch (phase) {
                 case GamePhase.paused:
+                  audioPlayer.play(AssetSource('sounds/resume.mp3'));
                   setState(() {
                     timerController.resume();
                     stopwatch.start();
@@ -220,6 +218,7 @@ class _HomepageState extends ConsumerState<Homepage> {
                   });
                   break;
                 case GamePhase.playing:
+                  audioPlayer.play(AssetSource('sounds/pause.mp3'));
                   setState(() {
                     timerController.pause();
                     stopwatch.stop();
