@@ -11,13 +11,12 @@ enum GamePhase { idle, paused, playing, overtime }
 
 @unfreezed
 class Game with _$Game {
-  Game._();
-  factory Game([
+  factory Game({
     @Default([]) List<Player> players,
     @Default([]) List<PlayerTransition> transitions,
     @Default(GamePhase.idle) GamePhase phase,
     Player? currentKing,
-  ]) = _Game;
+  }) = _Game;
 
   factory Game.fromJson(Map<String, dynamic> json) =>
       _$GameFromJson(json);

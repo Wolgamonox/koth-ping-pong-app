@@ -133,19 +133,19 @@ class __$$GameImplCopyWithImpl<$Res>
     Object? currentKing = freezed,
   }) {
     return _then(_$GameImpl(
-      null == players
+      players: null == players
           ? _value.players
           : players // ignore: cast_nullable_to_non_nullable
               as List<Player>,
-      null == transitions
+      transitions: null == transitions
           ? _value.transitions
           : transitions // ignore: cast_nullable_to_non_nullable
               as List<PlayerTransition>,
-      null == phase
+      phase: null == phase
           ? _value.phase
           : phase // ignore: cast_nullable_to_non_nullable
               as GamePhase,
-      freezed == currentKing
+      currentKing: freezed == currentKing
           ? _value.currentKing
           : currentKing // ignore: cast_nullable_to_non_nullable
               as Player?,
@@ -155,13 +155,12 @@ class __$$GameImplCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _$GameImpl extends _Game {
+class _$GameImpl implements _Game {
   _$GameImpl(
-      [this.players = const [],
+      {this.players = const [],
       this.transitions = const [],
       this.phase = GamePhase.idle,
-      this.currentKing])
-      : super._();
+      this.currentKing});
 
   factory _$GameImpl.fromJson(Map<String, dynamic> json) =>
       _$$GameImplFromJson(json);
@@ -197,13 +196,12 @@ class _$GameImpl extends _Game {
   }
 }
 
-abstract class _Game extends Game {
+abstract class _Game implements Game {
   factory _Game(
-      [List<Player> players,
+      {List<Player> players,
       List<PlayerTransition> transitions,
       GamePhase phase,
-      Player? currentKing]) = _$GameImpl;
-  _Game._() : super._();
+      Player? currentKing}) = _$GameImpl;
 
   factory _Game.fromJson(Map<String, dynamic> json) = _$GameImpl.fromJson;
 

@@ -9,12 +9,12 @@ part of 'player.dart';
 _$PlayerImpl _$$PlayerImplFromJson(Map<String, dynamic> json) => _$PlayerImpl(
       id: json['id'] as int,
       username: json['username'] as String,
-      fullName: json['fullName'] as String,
+      full_name: json['full_name'] as String,
     );
 
 Map<String, dynamic> _$$PlayerImplToJson(_$PlayerImpl instance) =>
     <String, dynamic>{
       'id': instance.id,
       'username': instance.username,
-      'fullName': instance.fullName,
+      'full_name': instance.full_name,
     };
