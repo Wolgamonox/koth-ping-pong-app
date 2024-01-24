@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:koth_ping_pong_app/presentation/widgets/drawer.dart';
 
 import '../services/game_service.dart';
 
@@ -20,32 +21,36 @@ class Homepage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Game"),
-        centerTitle: true,
-        leading: IconButton(onPressed: () {}, icon: const Icon(Icons.menu)),
+        title: const Text("King of the Hill"),
         actions: game.phase == GamePhase.idle
             ? [
-                IconButton(
-                  onPressed: () async {
-                    final scaffoldMessenger = ScaffoldMessenger.of(context);
+                Tooltip(
+                  message: "Add a new player.",
+                  child: IconButton(
+                    onPressed: () async {
+                      final scaffoldMessenger = ScaffoldMessenger.of(context);
 
-                    // TODO add more information on why the request failed
-                    // TODO Refactor for better return value as well using [AsyncValue]
-                    Player? newPlayer = await openAddPlayerDialog(context);
-                    if (newPlayer == null) {
-                      scaffoldMessenger.showSnackBar(
-                        const SnackBar(content: Text('Player not found')),
-                      );
-                      return;
-                    }
+                      // TODO add more information on why the request failed
+                      // TODO Refactor for better return value as well using [AsyncValue]
+                      Player? newPlayer = await openAddPlayerDialog(context);
+                      if (newPlayer == null) {
+                        scaffoldMessenger.showSnackBar(
+                          const SnackBar(content: Text('Player not found')),
+                        );
+                        return;
+                      }
 
-                    gameService.addPlayer(newPlayer);
-                  },
-                  icon: const Icon(Icons.add),
+                      gameService.addPlayer(newPlayer);
+                    },
+                    icon: const Icon(Icons.add),
+                  ),
                 ),
-                IconButton(
-                  onPressed: () => gameService.reset(alsoPlayers: true),
-                  icon: const Icon(Icons.refresh),
+                Tooltip(
+                  message: "Remove all players.",
+                  child: IconButton(
+                    onPressed: () => gameService.reset(alsoPlayers: true),
+                    icon: const Icon(Icons.refresh),
+                  ),
                 ),
               ]
             : null,
@@ -86,21 +91,25 @@ class Homepage extends ConsumerWidget {
       floatingActionButton: Visibility(
         visible:
             game.phase == GamePhase.playing || game.phase == GamePhase.paused,
-        child: InkWell(
-          onLongPress: gameService.reset,
-          child: switch (game.phase) {
-            GamePhase.playing => FloatingActionButton(
-                onPressed: gameService.pause,
-                child: const Icon(Icons.pause),
-              ),
-            GamePhase.paused => FloatingActionButton(
-                onPressed: gameService.resume,
-                child: const Icon(Icons.play_arrow),
-              ),
-            _ => null,
-          },
+        child: Tooltip(
+          message: "Long press to reset the game.",
+          child: InkWell(
+            onLongPress: gameService.reset,
+            child: switch (game.phase) {
+              GamePhase.playing => FloatingActionButton(
+                  onPressed: gameService.pause,
+                  child: const Icon(Icons.pause),
+                ),
+              GamePhase.paused => FloatingActionButton(
+                  onPressed: gameService.resume,
+                  child: const Icon(Icons.play_arrow),
+                ),
+              _ => null,
+            },
+          ),
         ),
       ),
+      drawer: const AppDrawer(),
     );
   }
 }

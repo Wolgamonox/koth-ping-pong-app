@@ -51,7 +51,7 @@ final countdownControllerProvider =
 );
 
 typedef CountdownControllerRef = AutoDisposeProviderRef<CountdownController>;
-String _$gameServiceHash() => r'3976fc3ab2ce682bedfd445d9556097a069214c0';
+String _$gameServiceHash() => r'aaba983ebdb41658465c62cceec44468f4200f72';
 
 /// See also [GameService].
 @ProviderFor(GameService)
