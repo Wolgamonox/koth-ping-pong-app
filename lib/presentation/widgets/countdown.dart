@@ -8,7 +8,7 @@ import 'package:timer_count_down/timer_count_down.dart';
 import '../../model/game.dart';
 import '../../services/game_service.dart';
 
-const Duration defaultGameDuration = Duration(seconds: 20);
+const Duration defaultGameDuration = Duration(minutes: 10);
 
 class CountDownWidget extends ConsumerStatefulWidget {
   const CountDownWidget({super.key});
