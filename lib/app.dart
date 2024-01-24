@@ -13,7 +13,7 @@ class App extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp(
       title: title,
-      theme: ref.watch(themeProvider),
+      theme: ref.watch(themeHandlerProvider),
       home: const Homepage(),
     );
   }
