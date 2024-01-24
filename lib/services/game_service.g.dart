@@ -6,6 +6,20 @@ part of 'game_service.dart';
 // RiverpodGenerator
 // **************************************************************************
 
+String _$audioPlayerHash() => r'0f9f941057440935279fb5ed67e9d88ff0d6549a';
+
+/// See also [audioPlayer].
+@ProviderFor(audioPlayer)
+final audioPlayerProvider = AutoDisposeProvider<AudioPlayer>.internal(
+  audioPlayer,
+  name: r'audioPlayerProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$audioPlayerHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef AudioPlayerRef = AutoDisposeProviderRef<AudioPlayer>;
 String _$stopwatchHash() => r'980d1d0065a4379ff9ada22648c75559735a2db4';
 
 /// See also [stopwatch].
@@ -20,7 +34,7 @@ final stopwatchProvider = AutoDisposeProvider<Stopwatch>.internal(
 );
 
 typedef StopwatchRef = AutoDisposeProviderRef<Stopwatch>;
-String _$gameServiceHash() => r'dc0bca5e0aedd1265068f410be552984365e0043';
+String _$gameServiceHash() => r'f4843e37f40570749dc4ed96b24d39f6b415dee8';
 
 /// See also [GameService].
 @ProviderFor(GameService)

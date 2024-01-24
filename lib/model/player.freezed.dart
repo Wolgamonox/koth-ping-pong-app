@@ -22,7 +22,7 @@ Player _$PlayerFromJson(Map<String, dynamic> json) {
 mixin _$Player {
   int get id => throw _privateConstructorUsedError;
   String get username => throw _privateConstructorUsedError;
-  String get fullName => throw _privateConstructorUsedError;
+  String get full_name => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -34,7 +34,7 @@ abstract class $PlayerCopyWith<$Res> {
   factory $PlayerCopyWith(Player value, $Res Function(Player) then) =
       _$PlayerCopyWithImpl<$Res, Player>;
   @useResult
-  $Res call({int id, String username, String fullName});
+  $Res call({int id, String username, String full_name});
 }
 
 /// @nodoc
@@ -52,7 +52,7 @@ class _$PlayerCopyWithImpl<$Res, $Val extends Player>
   $Res call({
     Object? id = null,
     Object? username = null,
-    Object? fullName = null,
+    Object? full_name = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -63,9 +63,9 @@ class _$PlayerCopyWithImpl<$Res, $Val extends Player>
           ? _value.username
           : username // ignore: cast_nullable_to_non_nullable
               as String,
-      fullName: null == fullName
-          ? _value.fullName
-          : fullName // ignore: cast_nullable_to_non_nullable
+      full_name: null == full_name
+          ? _value.full_name
+          : full_name // ignore: cast_nullable_to_non_nullable
               as String,
     ) as $Val);
   }
@@ -78,7 +78,7 @@ abstract class _$$PlayerImplCopyWith<$Res> implements $PlayerCopyWith<$Res> {
       __$$PlayerImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({int id, String username, String fullName});
+  $Res call({int id, String username, String full_name});
 }
 
 /// @nodoc
@@ -94,7 +94,7 @@ class __$$PlayerImplCopyWithImpl<$Res>
   $Res call({
     Object? id = null,
     Object? username = null,
-    Object? fullName = null,
+    Object? full_name = null,
   }) {
     return _then(_$PlayerImpl(
       id: null == id
@@ -105,9 +105,9 @@ class __$$PlayerImplCopyWithImpl<$Res>
           ? _value.username
           : username // ignore: cast_nullable_to_non_nullable
               as String,
-      fullName: null == fullName
-          ? _value.fullName
-          : fullName // ignore: cast_nullable_to_non_nullable
+      full_name: null == full_name
+          ? _value.full_name
+          : full_name // ignore: cast_nullable_to_non_nullable
               as String,
     ));
   }
@@ -117,7 +117,7 @@ class __$$PlayerImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$PlayerImpl extends _Player with DiagnosticableTreeMixin {
   const _$PlayerImpl(
-      {required this.id, required this.username, required this.fullName})
+      {required this.id, required this.username, required this.full_name})
       : super._();
 
   factory _$PlayerImpl.fromJson(Map<String, dynamic> json) =>
@@ -128,11 +128,11 @@ class _$PlayerImpl extends _Player with DiagnosticableTreeMixin {
   @override
   final String username;
   @override
-  final String fullName;
+  final String full_name;
 
   @override
   String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
-    return 'Player(id: $id, username: $username, fullName: $fullName)';
+    return 'Player(id: $id, username: $username, full_name: $full_name)';
   }
 
   @override
@@ -142,7 +142,7 @@ class _$PlayerImpl extends _Player with DiagnosticableTreeMixin {
       ..add(DiagnosticsProperty('type', 'Player'))
       ..add(DiagnosticsProperty('id', id))
       ..add(DiagnosticsProperty('username', username))
-      ..add(DiagnosticsProperty('fullName', fullName));
+      ..add(DiagnosticsProperty('full_name', full_name));
   }
 
   @override
@@ -153,13 +153,13 @@ class _$PlayerImpl extends _Player with DiagnosticableTreeMixin {
             (identical(other.id, id) || other.id == id) &&
             (identical(other.username, username) ||
                 other.username == username) &&
-            (identical(other.fullName, fullName) ||
-                other.fullName == fullName));
+            (identical(other.full_name, full_name) ||
+                other.full_name == full_name));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, id, username, fullName);
+  int get hashCode => Object.hash(runtimeType, id, username, full_name);
 
   @JsonKey(ignore: true)
   @override
@@ -179,7 +179,7 @@ abstract class _Player extends Player {
   const factory _Player(
       {required final int id,
       required final String username,
-      required final String fullName}) = _$PlayerImpl;
+      required final String full_name}) = _$PlayerImpl;
   const _Player._() : super._();
 
   factory _Player.fromJson(Map<String, dynamic> json) = _$PlayerImpl.fromJson;
@@ -189,7 +189,7 @@ abstract class _Player extends Player {
   @override
   String get username;
   @override
-  String get fullName;
+  String get full_name;
   @override
   @JsonKey(ignore: true)
   _$$PlayerImplCopyWith<_$PlayerImpl> get copyWith =>

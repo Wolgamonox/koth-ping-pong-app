@@ -7,16 +7,17 @@ part of 'game.dart';
 // **************************************************************************
 
 _$GameImpl _$$GameImplFromJson(Map<String, dynamic> json) => _$GameImpl(
-      (json['players'] as List<dynamic>?)
+      players: (json['players'] as List<dynamic>?)
               ?.map((e) => Player.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const [],
-      (json['transitions'] as List<dynamic>?)
+      transitions: (json['transitions'] as List<dynamic>?)
               ?.map((e) => PlayerTransition.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const [],
-      $enumDecodeNullable(_$GamePhaseEnumMap, json['phase']) ?? GamePhase.idle,
-      json['currentKing'] == null
+      phase: $enumDecodeNullable(_$GamePhaseEnumMap, json['phase']) ??
+          GamePhase.idle,
+      currentKing: json['currentKing'] == null
           ? null
           : Player.fromJson(json['currentKing'] as Map<String, dynamic>),
     );

@@ -9,6 +9,9 @@ import '../model/player_transition.dart';
 
 const String hostName = "wolgamonox.pythonanywhere.com";
 
+// TODO refactor for riverpod codegen
+
+
 final kothServerServiceProvider =
     StateNotifierProvider<KothServerService, KothServer>(
   (ref) => KothServerService(),
@@ -32,6 +35,9 @@ class KothServerService extends StateNotifier<KothServer> {
       {'username': username},
     ));
     if (response.statusCode == 200) {
+      // TODO refactor server api to have same model as here, change full_name to fullName
+
+      print(response.body);
       return Player.fromJson(jsonDecode(response.body));
     } else {
       return null;
