@@ -13,12 +13,12 @@ class Player with _$Player {
   const factory Player({
     required int id,
     required String username,
-    required String full_name,
+    @JsonKey(name: "full_name") required String fullName,
   }) = _Player;
 
   factory Player.fromJson(Map<String, Object?> json)
   => _$PlayerFromJson(json);
 
-  String get firstName => full_name.split(" ")[0];
-  String get lastName => full_name.split(" ")[1];
+  String get firstName => fullName.split(" ")[0];
+  String get lastName => fullName.split(" ")[1];
 }

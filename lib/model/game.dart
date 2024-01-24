@@ -9,15 +9,20 @@ part 'game.g.dart';
 
 enum GamePhase { idle, paused, playing, overtime }
 
-@unfreezed
+@freezed
 class Game with _$Game {
   factory Game({
-    @Default([]) List<Player> players,
-    @Default([]) List<PlayerTransition> transitions,
-    @Default(GamePhase.idle) GamePhase phase,
+    required List<Player> players,
+    required List<PlayerTransition> transitions,
+    required GamePhase phase,
     Player? currentKing,
   }) = _Game;
 
-  factory Game.fromJson(Map<String, dynamic> json) =>
-      _$GameFromJson(json);
+  factory Game.fromJson(Map<String, dynamic> json) => _$GameFromJson(json);
+
+  factory Game.empty({List<Player>? withPlayers}) => Game(
+        players: withPlayers ?? [],
+        transitions: [],
+        phase: GamePhase.idle,
+      );
 }

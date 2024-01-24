@@ -2,6 +2,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:koth_ping_pong_app/model/player_transition.dart';
 import 'package:koth_ping_pong_app/services/server_service.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:timer_count_down/timer_controller.dart';
 
 import '../model/game.dart';
 import '../model/player.dart';
@@ -27,27 +28,37 @@ Stopwatch stopwatch(StopwatchRef ref) {
 }
 
 @riverpod
+CountdownController countdownController(CountdownControllerRef ref) {
+  return CountdownController();
+}
+
+@riverpod
 class GameService extends _$GameService {
   @override
-  Game build() => Game();
+  Game build() => Game.empty();
 
   void addPlayer(Player player) {
-    state.players = [...state.players, player];
+    state = state.copyWith(players: [...state.players, player]);
   }
 
-  void removePlayer(Player player) {
-    if (state.players.contains(player)) {
-      state.players.remove(player);
-    }
+  void removePlayer(Player playerToRemove) {
+    final players =
+        state.players.where((player) => player != playerToRemove).toList();
+    state = state.copyWith(players: players);
   }
 
-  void start() {
+  void addTransition(PlayerTransition transition) {
+    state = state.copyWith(transitions: [...state.transitions, transition]);
+  }
+
+  void startWithKing(Player firstKing) {
     if (state.phase != GamePhase.idle) {
       throw GameError("Cannot start game when not in idle phase");
     }
 
-    state = state.copyWith(phase: GamePhase.playing);
+    state = state.copyWith(phase: GamePhase.playing, currentKing: firstKing);
     ref.read(stopwatchProvider).start();
+    ref.read(countdownControllerProvider).start();
     ref.read(audioPlayerProvider).play(AssetSource('sounds/game_start.mp3'));
   }
 
@@ -57,6 +68,7 @@ class GameService extends _$GameService {
     }
     state = state.copyWith(phase: GamePhase.paused);
     ref.read(stopwatchProvider).stop();
+    ref.read(countdownControllerProvider).pause();
     ref.read(audioPlayerProvider).play(AssetSource('sounds/pause.mp3'));
   }
 
@@ -66,6 +78,7 @@ class GameService extends _$GameService {
     }
     state = state.copyWith(phase: GamePhase.playing);
     ref.read(stopwatchProvider).start();
+    ref.read(countdownControllerProvider).resume();
     ref.read(audioPlayerProvider).play(AssetSource('sounds/resume.mp3'));
   }
 
@@ -73,6 +86,7 @@ class GameService extends _$GameService {
     if (state.phase != GamePhase.playing) {
       throw GameError("Cannot start overtime game when not in playing phase");
     }
+
     state = state.copyWith(phase: GamePhase.overtime);
     ref.read(audioPlayerProvider).play(AssetSource('sounds/overtime.mp3'));
   }
@@ -82,18 +96,14 @@ class GameService extends _$GameService {
       throw GameError("Cannot end game when not in overtime phase");
     }
 
-    state = state.copyWith(phase: GamePhase.idle);
-    final stopwatch = ref.read(stopwatchProvider);
-    stopwatch.stop();
-
     // Game is finished, get last player transition
-    state.transitions.add(PlayerTransition(
+    addTransition(PlayerTransition(
       player: state.currentKing!,
-      duration: stopwatch.elapsed.inSeconds,
+      duration: ref.read(stopwatchProvider).elapsed.inSeconds,
     ));
 
     if (lastKing != state.currentKing) {
-      state.transitions.add(PlayerTransition(player: lastKing, duration: 1));
+      addTransition(PlayerTransition(player: lastKing, duration: 1));
     }
 
     ref.read(audioPlayerProvider).play(AssetSource('sounds/game_end.mp3'));
@@ -104,11 +114,9 @@ class GameService extends _$GameService {
           state.transitions,
         );
 
+    // TODO: further improvement keep last king highlighted (maybe)
     // clean up for next game
     reset();
-
-    // TODO: further improvement keep last king highlighted
-    state = state.copyWith(currentKing: null);
   }
 
   void newKing(Player newKing) {
@@ -116,20 +124,33 @@ class GameService extends _$GameService {
       throw GameError("Current king is null");
     }
 
+    if (state.currentKing == newKing) {
+      // do nothing
+      return;
+    }
+
     ref.read(audioPlayerProvider).play(AssetSource('sounds/king_change.mp3'));
 
-    // Save last kings reign in a player transition
-    state.transitions.add(PlayerTransition(
+    // Save the last reign in a player transition
+    addTransition(PlayerTransition(
       player: state.currentKing!,
-      duration: ref.read(stopwatchProvider).elapsed.inSeconds,
+      duration: ref.watch(stopwatchProvider).elapsed.inSeconds,
     ));
+
+    ref.read(stopwatchProvider).reset();
+    state = state.copyWith(currentKing: newKing);
   }
 
   void reset({bool alsoPlayers = false}) {
+    ref.read(stopwatchProvider).stop();
+    ref.read(stopwatchProvider).reset();
+    ref.read(countdownControllerProvider).restart();
+    ref.read(countdownControllerProvider).pause();
+
     if (alsoPlayers) {
-      state = Game();
+      state = Game.empty();
     } else {
-      state = Game(players: state.players);
+      state = Game.empty(withPlayers: state.players);
     }
   }
 }

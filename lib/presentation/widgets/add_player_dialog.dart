@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../model/player.dart';
-import '../services/server_service.dart';
+import '../../model/player.dart';
+import '../../services/server_service.dart';
 
 Future<Player?> openAddPlayerDialog(BuildContext context) async {
   return await showDialog<Player>(
