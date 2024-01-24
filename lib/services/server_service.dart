@@ -36,8 +36,6 @@ class KothServerService extends StateNotifier<KothServer> {
     ));
     if (response.statusCode == 200) {
       // TODO refactor server api to have same model as here, change full_name to fullName
-
-      print(response.body);
       return Player.fromJson(jsonDecode(response.body));
     } else {
       return null;

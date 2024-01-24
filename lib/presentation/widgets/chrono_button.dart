@@ -3,23 +3,25 @@ import 'package:flutter/material.dart';
 class ChronoButton extends StatelessWidget {
   const ChronoButton(
       {super.key,
-      required this.playerFullName,
-      required this.color,
+      required this.name,
+      required this.isKing,
       required this.onPressed});
 
   final Function()? onPressed;
-  final String playerFullName;
-  final Color color;
+  final String name;
+  final bool isKing;
 
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton(
+    return FilledButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
-        backgroundColor: color,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24.0),
+        ),
       ),
       child: Text(
-        playerFullName,
+        name,
         style: Theme.of(context).textTheme.titleLarge,
       ),
     );

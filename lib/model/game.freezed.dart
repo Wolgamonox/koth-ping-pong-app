@@ -21,14 +21,9 @@ Game _$GameFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$Game {
   List<Player> get players => throw _privateConstructorUsedError;
-  set players(List<Player> value) => throw _privateConstructorUsedError;
   List<PlayerTransition> get transitions => throw _privateConstructorUsedError;
-  set transitions(List<PlayerTransition> value) =>
-      throw _privateConstructorUsedError;
   GamePhase get phase => throw _privateConstructorUsedError;
-  set phase(GamePhase value) => throw _privateConstructorUsedError;
   Player? get currentKing => throw _privateConstructorUsedError;
-  set currentKing(Player? value) => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -134,11 +129,11 @@ class __$$GameImplCopyWithImpl<$Res>
   }) {
     return _then(_$GameImpl(
       players: null == players
-          ? _value.players
+          ? _value._players
           : players // ignore: cast_nullable_to_non_nullable
               as List<Player>,
       transitions: null == transitions
-          ? _value.transitions
+          ? _value._transitions
           : transitions // ignore: cast_nullable_to_non_nullable
               as List<PlayerTransition>,
       phase: null == phase
@@ -157,30 +152,63 @@ class __$$GameImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$GameImpl implements _Game {
   _$GameImpl(
-      {this.players = const [],
-      this.transitions = const [],
-      this.phase = GamePhase.idle,
-      this.currentKing});
+      {required final List<Player> players,
+      required final List<PlayerTransition> transitions,
+      required this.phase,
+      this.currentKing})
+      : _players = players,
+        _transitions = transitions;
 
   factory _$GameImpl.fromJson(Map<String, dynamic> json) =>
       _$$GameImplFromJson(json);
 
+  final List<Player> _players;
   @override
-  @JsonKey()
-  List<Player> players;
+  List<Player> get players {
+    if (_players is EqualUnmodifiableListView) return _players;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_players);
+  }
+
+  final List<PlayerTransition> _transitions;
   @override
-  @JsonKey()
-  List<PlayerTransition> transitions;
+  List<PlayerTransition> get transitions {
+    if (_transitions is EqualUnmodifiableListView) return _transitions;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_transitions);
+  }
+
   @override
-  @JsonKey()
-  GamePhase phase;
+  final GamePhase phase;
   @override
-  Player? currentKing;
+  final Player? currentKing;
 
   @override
   String toString() {
     return 'Game(players: $players, transitions: $transitions, phase: $phase, currentKing: $currentKing)';
   }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$GameImpl &&
+            const DeepCollectionEquality().equals(other._players, _players) &&
+            const DeepCollectionEquality()
+                .equals(other._transitions, _transitions) &&
+            (identical(other.phase, phase) || other.phase == phase) &&
+            (identical(other.currentKing, currentKing) ||
+                other.currentKing == currentKing));
+  }
+
+  @JsonKey(ignore: true)
+  @override
+  int get hashCode => Object.hash(
+      runtimeType,
+      const DeepCollectionEquality().hash(_players),
+      const DeepCollectionEquality().hash(_transitions),
+      phase,
+      currentKing);
 
   @JsonKey(ignore: true)
   @override
@@ -198,25 +226,21 @@ class _$GameImpl implements _Game {
 
 abstract class _Game implements Game {
   factory _Game(
-      {List<Player> players,
-      List<PlayerTransition> transitions,
-      GamePhase phase,
-      Player? currentKing}) = _$GameImpl;
+      {required final List<Player> players,
+      required final List<PlayerTransition> transitions,
+      required final GamePhase phase,
+      final Player? currentKing}) = _$GameImpl;
 
   factory _Game.fromJson(Map<String, dynamic> json) = _$GameImpl.fromJson;
 
   @override
   List<Player> get players;
-  set players(List<Player> value);
   @override
   List<PlayerTransition> get transitions;
-  set transitions(List<PlayerTransition> value);
   @override
   GamePhase get phase;
-  set phase(GamePhase value);
   @override
   Player? get currentKing;
-  set currentKing(Player? value);
   @override
   @JsonKey(ignore: true)
   _$$GameImplCopyWith<_$GameImpl> get copyWith =>

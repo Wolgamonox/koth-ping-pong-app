@@ -18,6 +18,7 @@ class PlayerTransition with _$PlayerTransition {
       _$PlayerTransitionFromJson(json);
 }
 
+// TODO use the game serialization instead
 Map<String, dynamic> dataToJson(
     List<Player> players, List<PlayerTransition> transitions) {
   Map<String, dynamic> json = {
