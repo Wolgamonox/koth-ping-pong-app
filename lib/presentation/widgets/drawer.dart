@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:koth_ping_pong_app/presentation/soundpack_page/soundpack_page.dart';
 
 class AppDrawer extends ConsumerWidget {
   const AppDrawer({super.key});
@@ -24,7 +25,12 @@ class AppDrawer extends ConsumerWidget {
               title: const Text("Sound pack"),
               subtitle: const Text("debug"),
               trailing: const Icon(Icons.edit),
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SoundPackPage()),
+                );
+              },
             ),
           ),
           const Tooltip(
