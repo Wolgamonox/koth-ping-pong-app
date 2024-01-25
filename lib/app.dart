@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'presentation/theme.dart';
 
 import 'presentation/homepage.dart';
 
 const String title = 'Ping Pong Chrono';
 
-class App extends ConsumerWidget {
+class App extends StatelessWidget {
   const App({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return MaterialApp(
       title: title,
-      theme: ref.watch(themeHandlerProvider),
+      theme: ThemeData(
+        brightness: Brightness.light,
+        colorSchemeSeed: Colors.green,
+      ),
       home: const Homepage(),
     );
   }

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../theme.dart';
-
 class AppDrawer extends ConsumerWidget {
   const AppDrawer({super.key});
 
@@ -23,27 +21,23 @@ class AppDrawer extends ConsumerWidget {
             message: "Tap to change sound pack.",
             child: ListTile(
               leading: const Icon(Icons.music_note),
-              title: const Text("Debug"),
+              title: const Text("Sound pack"),
+              subtitle: const Text("debug"),
               trailing: const Icon(Icons.edit),
               onTap: () {},
             ),
           ),
-          Tooltip(
-            message: "Tap to switch between light and dark theme.",
+          const Tooltip(
+            message: "Tap to select a game preset.",
             child: ListTile(
-              leading: switch (Theme.of(context).brightness) {
-                Brightness.dark => const Icon(Icons.light_mode),
-                Brightness.light => const Icon(Icons.dark_mode),
-              },
-              title: const Text("Change theme"),
-              onTap: () {
-                ref
-                    .read(themeHandlerProvider.notifier)
-                    .setBrightness(switch (Theme.of(context).brightness) {
-                      Brightness.dark => Brightness.light,
-                      Brightness.light => Brightness.dark,
-                    });
-              },
+              leading: Icon(Icons.save),
+              title: Text("Presets"),
+              subtitle: Text(
+                "Not Implemented",
+                style: TextStyle(color: Colors.red),
+              ),
+              trailing: Icon(Icons.edit),
+              onTap: null,
             ),
           ),
         ],
