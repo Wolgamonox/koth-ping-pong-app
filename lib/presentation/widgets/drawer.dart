@@ -18,6 +18,7 @@ class AppDrawer extends ConsumerWidget {
               style: Theme.of(context).textTheme.titleLarge,
             ),
           ),
+          // TODO hide for web as it is not available
           Tooltip(
             message: "Tap to change sound pack.",
             child: ListTile(

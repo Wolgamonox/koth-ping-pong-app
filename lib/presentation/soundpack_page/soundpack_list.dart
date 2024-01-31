@@ -1,4 +1,8 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:archive/archive_io.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:koth_ping_pong_app/presentation/soundpack_page/soundpack_detail.dart';
 import 'package:koth_ping_pong_app/utils.dart';
@@ -13,27 +17,22 @@ class SoundPackListPage extends ConsumerStatefulWidget {
 }
 
 class _SoundPackListPageState extends ConsumerState<SoundPackListPage> {
-  final TextEditingController controller = TextEditingController();
+  final controller = TextEditingController();
 
-  // TODO fetch sound packs from directory
-  final soundPacks = List.generate(
-    10,
-    (index) => SoundPack(name: "sp$index", sounds: []),
-  );
-
-  List<SoundPack> search(String query) {
-    if (query.isEmpty) {
-      return [];
-    }
-
-    return soundPacks
-        .where((sp) => sp.name.toLowerCase().contains(query.toLowerCase()))
-        .toList();
-  }
+  // List<SoundPack> search(String query) {
+  //   if (query.isEmpty) {
+  //     return [];
+  //   }
+  //
+  //   return soundPacks
+  //       .where((sp) => sp.name.toLowerCase().contains(query.toLowerCase()))
+  //       .toList();
+  // }
 
   @override
   Widget build(BuildContext context) {
     final activeSoundPack = ref.watch(activeSoundPackProvider);
+    final soundPacks = ref.watch(soundPacksProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -82,22 +81,26 @@ class _SoundPackListPageState extends ConsumerState<SoundPackListPage> {
                       );
                     },
                   ),
-                  ...soundPacks.where((sp) => sp != activeSoundPack).map(
-                        (sp) => ListTile(
-                          title: Text(sp.name.capitalize()),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    SoundPackDetailPage(soundPack: sp),
+                  ...soundPacks.when(
+                      data: (data) =>
+                          data.where((sp) => sp != activeSoundPack).map(
+                                (sp) => ListTile(
+                                  title: Text(sp.name.capitalize()),
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            SoundPackDetailPage(soundPack: sp),
+                                      ),
+                                    );
+                                  },
+                                  // TODO: add deletion + confirmation dialog
+                                  onLongPress: null,
+                                ),
                               ),
-                            );
-                          },
-                          // TODO: add deletion + confirmation dialog
-                          onLongPress: null,
-                        ),
-                      )
+                      error: (err, st) => [],
+                      loading: () => [const CircularProgressIndicator()])
                 ],
               ),
             ),
@@ -108,7 +111,16 @@ class _SoundPackListPageState extends ConsumerState<SoundPackListPage> {
         message: "Add a new sound pack.",
         child: FloatingActionButton(
           // TODO add a filepicker soundpack
-          onPressed: () {},
+          onPressed: () async {
+            FilePickerResult? result = await FilePicker.platform.pickFiles();
+
+            if (result != null) {
+              setState(() async {
+                await SoundPackManager()
+                    .addSoundPack(result.files.single.path!);
+              });
+            }
+          },
           child: const Icon(Icons.add),
         ),
       ),

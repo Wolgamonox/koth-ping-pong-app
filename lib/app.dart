@@ -18,7 +18,7 @@ class App extends StatelessWidget {
         brightness: Brightness.light,
         colorSchemeSeed: Colors.green,
       ),
-      home: const Homepage(),
+      home: const SoundPackListPage(),
     );
   }
 }

@@ -23,6 +23,9 @@ dependencies:
   riverpod_annotation: ^2.3.3
   freezed_annotation: ^2.4.1
   json_annotation: ^4.8.1
+  path_provider: ^2.1.2
+  file_picker: ^6.1.1
+  archive: ^3.4.10
 
 dev_dependencies:
   flutter_test:

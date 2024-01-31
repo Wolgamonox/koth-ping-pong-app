@@ -9,6 +9,7 @@ enum SoundType { gameStart, gameEnd, newKing, pause, resume, overtime }
 class Sound with _$Sound {
   const factory Sound({
     required SoundType type,
+    required String path,
     required Duration duration,
 }) = _Sound;
 }
